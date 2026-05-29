@@ -2,6 +2,7 @@
 
 ## Version 8.x *(unreleased)*
 * Drop support for npm versions older than 7
+* Upgrade default Node to 24.16.0 and npm to 11.13.0
 
 ## Version 7.1.0 *(2024-09-27)*
 * Add support for ARM64 Windows [#315](https://github.com/node-gradle/gradle-node-plugin/issues/315)
