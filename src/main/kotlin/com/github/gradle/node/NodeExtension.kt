@@ -136,7 +136,7 @@ open class NodeExtension(project: Project) {
      * Requires npm 7 or later
      * This will become the default in 4.x
      */
-    val fastNpmInstall = project.objects.property<Boolean>().convention(false)
+    val fastNpmInstall = project.objects.property<Boolean>().convention(true)
 
     /**
      * Disable functionality that requires newer versions of npm
