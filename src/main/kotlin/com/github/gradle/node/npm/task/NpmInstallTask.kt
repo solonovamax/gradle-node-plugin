@@ -52,9 +52,7 @@ abstract class NpmInstallTask : NpmTask() {
     @Optional
     @InputFile
     protected fun getPackageLockFileAsInput(): File? {
-        return npmCommand.flatMap { command ->
-            if (command[0] == "ci") projectFileIfExists("package-lock.json") else providers.provider { null }
-        }.orNull
+        return projectFileIfExists("fake-file-dont-worry-just-a-test").orNull
     }
 
     @PathSensitive(RELATIVE)
@@ -67,9 +65,7 @@ abstract class NpmInstallTask : NpmTask() {
     @Optional
     @OutputFile
     protected fun getPackageLockFileAsOutput(): File? {
-        return npmCommand.flatMap { command ->
-            if (command[0] == "install") projectFileIfExists("package-lock.json") else providers.provider { null }
-        }.orNull
+        return projectFileIfExists("package-lock.json").orNull
     }
 
     private fun projectFileIfExists(name: String): Provider<File?> {
