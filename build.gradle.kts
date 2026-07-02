@@ -1,7 +1,10 @@
+import com.github.gradle.buildlogic.GradleVersionData
+import com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_4
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 buildscript {
     repositories {
@@ -29,7 +32,7 @@ val toolchainVersion = JavaLanguageVersion.of(17)
 
 java {
     toolchain {
-        languageVersion.set(toolchainVersion)
+        languageVersion = toolchainVersion
     }
 
     targetCompatibility = compatibilityVersion
@@ -37,16 +40,16 @@ java {
 
 kotlin {
     jvmToolchain {
-        languageVersion.set(toolchainVersion)
+        languageVersion = toolchainVersion
     }
 
     compilerOptions {
-        apiVersion.set(KOTLIN_1_4)
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        apiVersion = KotlinVersion.KOTLIN_1_4
+        jvmTarget = JvmTarget.JVM_1_8
     }
 }
 
-//tasks.compileKotlin {
+// tasks.compileKotlin {
 //    kotlinOptions {
 //        apiVersion = "1.3"
 //        freeCompilerArgs = listOf("-Xno-optimized-callable-references")
@@ -88,7 +91,7 @@ tasks.compileTestGroovy {
 tasks.withType(Test::class) {
     useJUnitPlatform()
     systemProperty(
-        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
+        GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
         project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
     )
 
@@ -102,15 +105,15 @@ tasks.withType(Test::class) {
 
     develocity {
         testDistribution {
-            enabled.set(project.properties["com.github.gradle.node.testdistribution"].toString().toBoolean())
-            remoteExecutionPreferred.set(project.properties["com.github.gradle.node.preferremote"].toString().toBoolean())
-            if (project.properties["com.github.gradle.node.remoteonly"].toString().toBoolean()) {
-                maxLocalExecutors.set(0)
+            enabled = project.providers.gradleProperty("com.github.gradle.node.testdistribution").map { it.toBoolean() }.orElse(false)
+            remoteExecutionPreferred = project.providers.gradleProperty("com.github.gradle.node.preferremote").map { it.toBoolean() }.orElse(false)
+            if (project.providers.gradleProperty("com.github.gradle.node.remoteonly").getOrElse("false").toBoolean()) {
+                maxLocalExecutors = 0
             }
         }
 
         predictiveTestSelection {
-            enabled.set(project.properties["com.github.gradle.node.predictivetestselection"].toString().toBoolean())
+            enabled = project.providers.gradleProperty("com.github.gradle.node.predictivetestselection").map { it.toBoolean() }.orElse(false)
         }
     }
 }
@@ -133,42 +136,38 @@ tasks.register<Test>("pnpmTests") {
 
 tasks.register<Test>("testGradleReleases") {
     jvmArgumentProviders.add(
-        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider(
-            com.github.gradle.buildlogic.GradleVersionData::getReleasedVersions
-        )
+        GradleVersionsCommandLineArgumentProvider(GradleVersionData::getReleasedVersions)
     )
 }
 
 tasks.register("printVersions") {
     doLast {
-        println(com.github.gradle.buildlogic.GradleVersionData::getReleasedVersions.invoke())
+        println(GradleVersionData.getReleasedVersions())
     }
 }
 
 tasks.register<Test>("testGradleNightlies") {
     jvmArgumentProviders.add(
-        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider(
-            com.github.gradle.buildlogic.GradleVersionData::getNightlyVersions
-        )
+        GradleVersionsCommandLineArgumentProvider(GradleVersionData::getNightlyVersions)
     )
 }
 
-tasks.register("runParameterTest", JavaExec::class.java) {
+tasks.register<JavaExec>("runParameterTest") {
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("com.github.gradle.node.util.PlatformHelperKt")
+    mainClass = "com.github.gradle.node.util.PlatformHelperKt"
 }
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)
-        html.required.set(true)
+        xml.required = true
+        html.required = true
     }
 }
 
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+tasks.withType<DokkaTask>().configureEach {
     dokkaSourceSets {
         named("main") {
-            jdkVersion.set(compatibilityVersion.majorVersion.toInt())
+            jdkVersion = compatibilityVersion.majorVersion.toInt()
         }
     }
 }
@@ -196,7 +195,7 @@ tasks.withType<Test>().configureEach {
     jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
 
     develocity.testRetry {
-        maxRetries.set(3)
+        maxRetries = 3
         filter {
             includeClasses.add("*_integTest")
         }
@@ -205,8 +204,8 @@ tasks.withType<Test>().configureEach {
 publishing.publications.withType<MavenPublication>().configureEach {
     pom.licenses {
         license {
-            name.set("Apache License, Version 2.0")
-            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            name = "Apache License, Version 2.0"
+            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
         }
     }
 }
