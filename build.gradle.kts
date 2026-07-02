@@ -65,6 +65,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.22.0")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
     testImplementation("org.assertj:assertj-core:3.27.7")
@@ -88,12 +89,17 @@ tasks.compileTestGroovy {
     classpath += files(sourceSets.test.get().kotlin.classesDirectory)
 }
 
-tasks.withType(Test::class) {
+tasks.withType(Test::class).configureEach {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
     useJUnitPlatform()
     systemProperty(
         GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
         project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
     )
+
+    testClassesDirs = files(sourceSets.test.map { it.output.classesDirs })
+    classpath = files(sourceSets.test.map { it.runtimeClasspath })
 
     val processorsCount = Runtime.getRuntime().availableProcessors()
     val safeMaxForks = if (processorsCount > 2) processorsCount.div(2) else processorsCount
