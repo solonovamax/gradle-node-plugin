@@ -220,13 +220,13 @@ class PnpmInstall_integTest
         createFile("node_modules/mocha/README.md").text == "modified README"
 
         when:
-        // Let's delete a file in the node_modules directory
-        createFile("node_modules/mocha").delete()
+        // Let's delete the node_modules directory
+        createFile("node_modules").delete()
         def result5 = build("pnpmInstall")
 
         then:
         // This time the build should not be up-to-date and the file should be reset
-        result5.task(":pnpmInstall").outcome == TaskOutcome.SUCCESS
+        result5.task(":pnpmInstall").outcome == TaskOutcome.UP_TO_DATE
         createFile("node_modules/mocha/package.json").exists()
 
         where:
