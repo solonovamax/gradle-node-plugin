@@ -7,8 +7,15 @@ import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileTree
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.OutputFiles
+import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.kotlin.dsl.property
 import java.io.File
 
@@ -74,7 +81,7 @@ abstract class NpmInstallTask : NpmTask() {
 
     private fun projectFileIfExists(name: String): Provider<File> {
         return nodeExtension.nodeProjectDir.map { it.file(name).asFile }
-            .flatMap { if (it.exists()) providers.provider { it } else providers.provider { null } }
+            .map { if (it.exists()) it else null }
     }
 
     @Optional
@@ -95,12 +102,10 @@ abstract class NpmInstallTask : NpmTask() {
         } else {
             val nodeModulesDirectoryProvider = nodeExtension.nodeProjectDir.dir("node_modules")
             zip(nodeModulesDirectoryProvider, nodeModulesOutputFilter)
-                .flatMap { (nodeModulesDirectory, nodeModulesOutputFilter) ->
-                    if (nodeModulesOutputFilter != null) {
-                        val fileTree = objects.fileTree().from(nodeModulesDirectory)
-                        nodeModulesOutputFilter.execute(fileTree)
-                        providers.provider { fileTree }
-                    } else providers.provider { null }
+                .map { (nodeModulesDirectory, nodeModulesOutputFilter) ->
+                    val fileTree = objects.fileTree().from(nodeModulesDirectory)
+                    nodeModulesOutputFilter.execute(fileTree)
+                    fileTree
                 }
         }
     }
