@@ -179,11 +179,11 @@ tasks.withType<DokkaTask>().configureEach {
 }
 
 gradlePlugin {
-    website = "https://github.com/node-gradle/gradle-node-plugin"
-    vcsUrl = "https://github.com/node-gradle/gradle-node-plugin"
+    website = "https://github.com/solonovamax/gradle-node-plugin"
+    vcsUrl = "https://github.com/solonovamax/gradle-node-plugin"
     plugins {
         register("nodePlugin") {
-            id = "com.github.node-gradle.node"
+            id = "gay.solonovamax.node-gradle.node"
             implementationClass = "com.github.gradle.node.NodePlugin"
             displayName = "Gradle Node.js Plugin"
             description = "Gradle plugin for executing Node.js scripts. Supports npm, pnpm, Yarn and Bun."
@@ -207,11 +207,37 @@ tasks.withType<Test>().configureEach {
         }
     }
 }
-publishing.publications.withType<MavenPublication>().configureEach {
-    pom.licenses {
-        license {
-            name = "Apache License, Version 2.0"
-            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+
+publishing {
+    repositories {
+        maven {
+            name = "SoloStudiosReleases"
+
+            url = uri("https://maven.solo-studios.ca/releases/")
+
+            credentials(PasswordCredentials::class)
+            authentication { // publishing doesn't work without this for some reason
+                create<BasicAuthentication>("basic")
+            }
+        }
+        maven {
+            name = "SoloStudiosSnapshots"
+
+            url = uri("https://maven.solo-studios.ca/snapshots/")
+
+            credentials(PasswordCredentials::class)
+            authentication { // publishing doesn't work without this for some reason
+                create<BasicAuthentication>("basic")
+            }
+        }
+    }
+
+    publications.withType<MavenPublication>().configureEach {
+        pom.licenses {
+            license {
+                name = "Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
         }
     }
 }
