@@ -4,6 +4,14 @@ import com.github.gradle.node.bun.task.BunInstallTask
 import com.github.gradle.node.bun.task.BunSetupTask
 import com.github.gradle.node.bun.task.BunTask
 import com.github.gradle.node.bun.task.BunxTask
+import com.github.gradle.node.corepack.task.CorepackBaseTask
+import com.github.gradle.node.corepack.task.CorepackSetupTask
+import com.github.gradle.node.corepack.task.npm.CorepackNpmInstallTask
+import com.github.gradle.node.corepack.task.npm.CorepackNpmTask
+import com.github.gradle.node.corepack.task.pnpm.CorepackPnpmInstallTask
+import com.github.gradle.node.corepack.task.pnpm.CorepackPnpmTask
+import com.github.gradle.node.corepack.task.yarn.CorepackYarnInstallTask
+import com.github.gradle.node.corepack.task.yarn.CorepackYarnTask
 import com.github.gradle.node.npm.proxy.ProxySettings
 import com.github.gradle.node.npm.task.NpmInstallTask
 import com.github.gradle.node.npm.task.NpmSetupTask
@@ -32,7 +40,6 @@ import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 import org.gradle.process.ExecSpec
 import org.gradle.util.GradleVersion
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 class NodePlugin : Plugin<Project> {
@@ -51,6 +58,7 @@ class NodePlugin : Plugin<Project> {
         addNpmRule(nodeExtension.enableTaskRules)
         addPnpmRule(nodeExtension.enableTaskRules)
         addYarnRule(nodeExtension.enableTaskRules)
+        addCorepackRule(nodeExtension.enableTaskRules)
         project.afterEvaluate {
             if (nodeExtension.download.get()) {
                 nodeExtension.distBaseUrl.orNull?.let { addRepository(it, nodeExtension.allowInsecureProtocol.orNull) }
@@ -105,6 +113,10 @@ class NodePlugin : Plugin<Project> {
         addGlobalType<NpxTask>()
         addGlobalType<PnpmTask>()
         addGlobalType<YarnTask>()
+        addGlobalType<CorepackBaseTask>()
+        addGlobalType<CorepackNpmTask>()
+        addGlobalType<CorepackPnpmTask>()
+        addGlobalType<CorepackYarnTask>()
         addGlobalType<BunTask>()
         addGlobalType<BunxTask>()
         addGlobalType<ProxySettings>()
@@ -118,11 +130,16 @@ class NodePlugin : Plugin<Project> {
         project.tasks.register<NpmInstallTask>(NpmInstallTask.NAME)
         project.tasks.register<PnpmInstallTask>(PnpmInstallTask.NAME)
         project.tasks.register<YarnInstallTask>(YarnInstallTask.NAME)
+        project.tasks.register<CorepackNpmInstallTask>(CorepackNpmInstallTask.NAME)
+        project.tasks.register<CorepackPnpmInstallTask>(CorepackPnpmInstallTask.NAME)
+        project.tasks.register<CorepackYarnInstallTask>(CorepackYarnInstallTask.NAME)
         project.tasks.register<BunInstallTask>(BunInstallTask.NAME)
+
         project.tasks.register<NodeSetupTask>(NodeSetupTask.NAME)
         project.tasks.register<NpmSetupTask>(NpmSetupTask.NAME)
         project.tasks.register<PnpmSetupTask>(PnpmSetupTask.NAME)
         project.tasks.register<YarnSetupTask>(YarnSetupTask.NAME)
+        project.tasks.register<CorepackSetupTask>(CorepackSetupTask.NAME)
         project.tasks.register<BunSetupTask>(BunSetupTask.NAME)
     }
 
@@ -165,6 +182,31 @@ class NodePlugin : Plugin<Project> {
                     yarnCommand.set(tokens)
                     if (tokens.first().equals("run", ignoreCase = true)) {
                         dependsOn(YarnInstallTask.NAME)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addCorepackRule(enableTaskRules: Property<Boolean>) { // note this rule also makes it possible to specify e.g. "dependsOn yarn_install"
+        project.tasks.addRule("Pattern: \"corepack_<command>\": Executes a Corepack command.") {
+            val taskName = this
+            if (taskName.startsWith("corepack_") && enableTaskRules.get()) {
+                project.tasks.create<CorepackBaseTask>(taskName) {
+                    val tokens = taskName.split("_").drop(1) // all except first
+                    val commandTokens = tokens.drop(1)
+                    val packageManager = tokens.first()
+                    command.set(packageManager)
+                    corepackCommand.set(commandTokens)
+                    println("executing ${packageManager} ${commandTokens}")
+                    if (commandTokens.first().equals("run", ignoreCase = true)) {
+                        val installTaskName = when (packageManager) {
+                            "npm" -> CorepackNpmInstallTask.NAME
+                            "pnpm" -> CorepackPnpmInstallTask.NAME
+                            "yarn" -> CorepackYarnInstallTask.NAME
+                            else -> error("Unknown package manager '$packageManager'")
+                        }
+                        dependsOn(installTaskName)
                     }
                 }
             }
@@ -218,6 +260,7 @@ class NodePlugin : Plugin<Project> {
         const val NPM_GROUP = "npm"
         const val PNPM_GROUP = "pnpm"
         const val YARN_GROUP = "Yarn"
+        const val COREPACK_GROUP = "corepack"
         const val BUN_GROUP = "Bun"
     }
 }

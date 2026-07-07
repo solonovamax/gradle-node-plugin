@@ -185,6 +185,24 @@ open class VariantComputer {
         }
     }
 
+    fun computeCorepackDir(nodeExtension: NodeExtension): Provider<Directory> {
+        return computePackageDir("corepack", nodeExtension.corepackVersion, nodeExtension.corepackWorkDir)
+    }
+
+    fun computeCorepackBinDir(corepackDirProvider: Provider<Directory>, platform: Property<Platform>) =
+        computeProductBinDir(corepackDirProvider, platform)
+
+    fun computeCorepackExec(nodeExtension: NodeExtension, corepackBinDirProvider: Provider<Directory>): Provider<String> {
+        return zip(nodeExtension.corepackCommand, corepackBinDirProvider).map {
+            val (corepackCommand, corepackBinDir) = it
+            val command = if (nodeExtension.resolvedPlatform.get().isWindows()) {
+                corepackCommand.mapIf({ it == "corepack" }) { "corepack.cmd" }
+            } else corepackCommand
+            // This is conceptually pretty simple as we per documentation always download corepack
+            corepackBinDir.dir(command).asFile.absolutePath
+        }
+    }
+
     fun computeBunDir(nodeExtension: NodeExtension): Provider<Directory> {
         return computePackageDir("bun", nodeExtension.bunVersion, nodeExtension.bunWorkDir)
     }

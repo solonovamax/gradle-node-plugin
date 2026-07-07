@@ -31,6 +31,12 @@ open class NodeExtension(project: Project) {
     val yarnWorkDir = project.objects.directoryProperty().convention(cacheDir.dir("yarn"))
 
     /**
+     * The directory where corepack is installed (when a Corepack task is
+     * used).
+     */
+    val corepackWorkDir = project.objects.directoryProperty().convention(cacheDir.dir("corepack"))
+
+    /**
      * The directory where Bun is installed (when a Bun task is used)
      */
     val bunWorkDir = project.objects.directoryProperty().convention(cacheDir.dir("bun"))
@@ -70,6 +76,13 @@ open class NodeExtension(project: Project) {
     val yarnVersion = project.objects.property<String>().convention("")
 
     /**
+     * Version of Corepack to use Any Corepack task first installs Corepack in
+     * the corepackWorkDir It uses the specified version if defined and the
+     * latest version otherwise (by default).
+     */
+    val corepackVersion = project.objects.property<String>().convention("")
+
+    /**
      * Version of Bun to use
      * Any Bun task first installs Bun in the bunWorkDir
      * It uses the specified version if defined and the latest version otherwise (by default)
@@ -96,6 +109,7 @@ open class NodeExtension(project: Project) {
     val npxCommand = project.objects.property<String>().convention("npx")
     val pnpmCommand = project.objects.property<String>().convention("pnpm")
     val yarnCommand = project.objects.property<String>().convention("yarn")
+    val corepackCommand = project.objects.property<String>().convention("corepack")
     val bunCommand = project.objects.property<String>().convention("bun")
     val bunxCommand = project.objects.property<String>().convention("bunx")
 
@@ -149,12 +163,12 @@ open class NodeExtension(project: Project) {
     val oldNpm = project.objects.property<Boolean>().convention(false)
 
     /**
-     * Create rules for automatic task creation
+     * Create rules for automatic task creation.
      *
-     * Disabling this will prevent the npm_ npx_ yarn_ pnpm_ tasks from being
-     * automatically created.
-     * It's recommended to turn this off after you've gotten comfortable
-     * with the plugin and register your own tasks instead of relying on the rule.
+     * Disabling this will prevent the npm_ npx_ yarn_ pnpm_ corepack_ tasks
+     * from being automatically created. It's recommended to turn this off
+     * after you've gotten comfortable with the plugin and register your own
+     * tasks instead of relying on the rule.
      */
     val enableTaskRules = project.objects.property<Boolean>().convention(true)
 

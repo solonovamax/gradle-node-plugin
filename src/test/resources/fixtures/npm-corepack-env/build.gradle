@@ -1,0 +1,69 @@
+import org.gradle.util.GradleVersion
+
+plugins {
+    id "com.github.node-gradle.node"
+}
+
+node {
+    download = true
+    workDir = file("build/node")
+}
+
+task env(type: CorepackNpmTask) {
+    dependsOn corepackNpmInstall
+    npmCommand = ["run", "print-env"]
+    outputs.upToDateWhen {
+        true
+    }
+}
+
+// This should be documented in the package.json file but it cannot be done because JSON does not accept comments.
+// npm run forces the current directory but we can read the INIT_CWD environment variable to get the original working
+// directory. This is the reason why we read the INIT_CWD variable and not the process.cwd() one in the script
+// definition.
+task pwd(type: CorepackNpmTask) {
+    dependsOn corepackNpmInstall
+    npmCommand = ["run", "printcwd"]
+    outputs.upToDateWhen {
+        true
+    }
+}
+
+task version(type: CorepackNpmTask) {
+    dependsOn corepackNpmInstall
+    npmCommand = ["--version"]
+}
+
+if (isPropertyEnabled("customEnv")) {
+    def qualifier = "custom"
+    env.environment = [CUSTOM: "${qualifier} value"]
+}
+
+if (isPropertyEnabled("ignoreExitValue")) {
+    env.ignoreExitValue = true
+}
+
+if (isPropertyEnabled("notExistingCommand")) {
+    env.npmCommand = ["notExistingCommand"]
+}
+
+if (isPropertyEnabled("customWorkingDir")) {
+    pwd.workingDir = file("${project.buildDir}/customWorkingDirectory/")
+}
+
+if (isPropertyEnabled("outputFile")) {
+    def out = project.objects.fileProperty()
+    out.set(project.file("${buildDir}/standard-output.txt"))
+    env.execOverrides {
+        standardOutput = new FileOutputStream(out.get().asFile)
+    }
+}
+
+def isPropertyEnabled(String name) {
+    def provider = providers.systemProperty(name)
+    if (GradleVersion.current() >= GradleVersion.version("7.4")) {
+        return provider.isPresent()
+    } else {
+        return provider.forUseAtConfigurationTime().isPresent()
+    }
+}

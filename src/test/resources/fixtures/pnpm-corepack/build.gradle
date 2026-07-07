@@ -1,0 +1,35 @@
+plugins {
+    id 'com.github.node-gradle.node'
+}
+
+def changeInputs = isPropertyEnabled("changeInputs")
+
+node {
+    download = true
+    workDir = file('build/node')
+}
+
+task test(type: CorepackPnpmTask) {
+    dependsOn corepackPnpmInstall
+    pnpmCommand = changeInputs ? ['run', 'test'] : ['run']
+    args = changeInputs ? [] : ['test']
+    inputs.file('package.json')
+    inputs.files('index.js', 'test.js')
+    outputs.upToDateWhen {
+        true
+    }
+}
+
+task version(type: CorepackPnpmTask) {
+    dependsOn corepackPnpmInstall
+    pnpmCommand = ["--version"]
+}
+
+def isPropertyEnabled(String name) {
+    def provider = providers.systemProperty(name)
+    if (org.gradle.util.GradleVersion.current() >= org.gradle.util.GradleVersion.version("7.4")) {
+        return provider.isPresent()
+    } else {
+        return provider.forUseAtConfigurationTime().isPresent()
+    }
+}

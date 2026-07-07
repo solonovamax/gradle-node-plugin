@@ -1,0 +1,7 @@
+{
+  "name": "example",
+  "scripts": {
+    "npmVersion": "echo Version && npm --version"
+  },
+  "packageManager": "npm@11.18.0"
+}

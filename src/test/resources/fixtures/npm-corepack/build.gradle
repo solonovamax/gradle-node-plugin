@@ -1,0 +1,38 @@
+import org.gradle.util.GradleVersion
+
+plugins {
+    id 'com.github.node-gradle.node'
+}
+
+def changeInputs = isPropertyEnabled("changeInputs")
+
+node {
+    download = true
+    workDir = file('build/node')
+}
+
+task test(type: CorepackNpmTask) {
+    dependsOn corepackNpmInstall
+    npmCommand = changeInputs ? ['run', 'test'] : ['run']
+    args = changeInputs ? [] : ['test']
+    inputs.file('package.json')
+    inputs.dir('src')
+    inputs.dir('test')
+    outputs.upToDateWhen {
+        true
+    }
+}
+
+task version(type: CorepackNpmTask) {
+    dependsOn corepackNpmInstall
+    npmCommand = ["--version"]
+}
+
+def isPropertyEnabled(String name) {
+    def provider = providers.systemProperty(name)
+    if (GradleVersion.current() >= GradleVersion.version("7.4")) {
+        return provider.isPresent()
+    } else {
+        return provider.forUseAtConfigurationTime().isPresent()
+    }
+}
