@@ -2,14 +2,11 @@ package com.github.gradle.node.task
 
 import com.github.gradle.AbstractProjectTest
 import com.github.gradle.node.NodeExtension
-import com.github.gradle.node.util.ProjectApiHelper
 import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
-
-import java.lang.reflect.Field
 
 abstract class AbstractTaskTest extends AbstractProjectTest {
     ExecResult execResult
@@ -24,28 +21,16 @@ abstract class AbstractTaskTest extends AbstractProjectTest {
         nodeExtension = NodeExtension.get(project)
     }
 
-    protected mockExecOperationsExec(Task task, String fieldName = "execOperations") {
-        Field execOperationsField = findExecOperationsTaskField(task, fieldName)
-        execOperationsField.setAccessible(true)
-        ExecOperations execOperations = Spy(execOperationsField.get(task)) as ExecOperations
+    protected <T extends Task> T mockExecOperationsExec(T task) {
+        T taskSpy = Spy(task) as T
+        ExecOperations execOperations = Spy(project.services.get(ExecOperations)) as ExecOperations
         execOperations.exec(_ as Action<ExecSpec>) >> { Action<ExecSpec> action ->
             action.execute(execSpec)
             return execResult
         }
-        execOperationsField.set(task, execOperations)
-        execOperationsField.setAccessible(false)
-    }
 
-    private static Field findExecOperationsTaskField(Task task, String fieldName) {
-        Class<?> type = task.getClass()
-        while (type != null) {
-            try {
-                return type.getDeclaredField(fieldName)
-            } catch (NoSuchFieldException _) {
-                type = type.getSuperclass()
-            }
-        }
-        throw new IllegalStateException("No ${fieldName} field found in class ${task.getClass()}")
+        taskSpy.getExecOperations() >> execOperations
+        return taskSpy
     }
 
     protected static containsPath(final Map<String, ?> env) {

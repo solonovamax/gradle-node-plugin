@@ -9,7 +9,7 @@ class PnpmSetupTaskTest
     def "exec pnpmSetup task without any pnpm version specified"() {
         given:
         def task = project.tasks.create('simple', PnpmSetupTask)
-        mockExecOperationsExec(task)
+        task = mockExecOperationsExec(task)
 
         when:
         project.evaluate()
@@ -29,7 +29,7 @@ class PnpmSetupTaskTest
         given:
         nodeExtension.pnpmVersion.set(Versions.TEST_PNPM_DOWNLOAD_VERSION)
         def task = project.tasks.create('simple', PnpmSetupTask)
-        mockExecOperationsExec(task)
+        task = mockExecOperationsExec(task)
 
         when:
         project.evaluate()

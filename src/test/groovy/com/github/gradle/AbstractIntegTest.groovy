@@ -5,6 +5,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.BuildTask
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -64,11 +65,11 @@ abstract class AbstractIntegTest extends Specification {
     protected final File writeFile(final String name, final String text) {
         File file = createFile(name)
         file.parentFile.mkdirs()
-        file << text
+        file.write(text)
         return file
     }
 
-    protected final void writePackageJson(final String text) {
+    protected final void writePackageJson(@Language("JSON") final String text) {
         writeFile('package.json', text)
     }
 
