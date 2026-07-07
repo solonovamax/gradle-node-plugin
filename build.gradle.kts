@@ -25,7 +25,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.7.10"
 }
 
-group = "com.github.node-gradle"
+group = "gay.solonovamax.node-gradle"
 
 val compatibilityVersion = JavaVersion.VERSION_1_8
 val toolchainVersion = JavaLanguageVersion.of(17)
